@@ -47,5 +47,4 @@ data/*.mov
 
 # YOLO models (will be downloaded automatically)
 *.pt
-!yolov8n.pt
 
