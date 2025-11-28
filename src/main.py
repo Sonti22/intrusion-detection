@@ -27,19 +27,29 @@ def run() -> None:
         print(f"Cannot open video: {VIDEO_PATH}")
         return
 
+    print("Starting video processing...")
+    print("Press 'q' or ESC to exit")
+    
     try:
+        frame_count = 0
         while True:
             ok, frame = cap.read()
             if not ok:
-                break
+                print(f"\nVideo ended after {frame_count} frames. Restarting...")
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video
+                continue
+            
+            frame_count += 1
             timestamp = time.time()
             detections = detector.detect(frame, timestamp)
             state = service.update(detections, timestamp)
             frame_out = renderer.render(frame, zones, detections, state)
             cv2.imshow(WINDOW_NAME, frame_out)
 
-            key = cv2.waitKey(1) & 0xFF
+            # Wait 30ms between frames (~33 FPS) or until key is pressed
+            key = cv2.waitKey(30) & 0xFF
             if key in (ord("q"), 27):  # q or ESC
+                print("\nExiting...")
                 break
     finally:
         cap.release()
