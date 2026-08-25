@@ -1,6 +1,7 @@
 """YOLO-based person detector adapter."""
 from __future__ import annotations
 
+import pathlib
 import numpy as np
 from ultralytics import YOLO
 
@@ -27,7 +28,21 @@ class YoloPersonDetector(PersonDetector):
             conf: Confidence threshold
             iou: IoU threshold for NMS
         """
-        self.model = YOLO(model_name)
+        # Resolve model path for clearer error messages
+        model_path = pathlib.Path(model_name)
+        try:
+            # If a local file is specified, ensure it exists before loading
+            if model_path.is_file():
+                self.model = YOLO(str(model_path))
+            else:
+                # Let ultralytics handle downloading/using a model name
+                self.model = YOLO(model_name)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to load YOLO model '{model_name}'. "
+                "Ensure the model file exists and is a valid YOLO model."
+            ) from exc
+
         self.device = device
         self.conf = conf
         self.iou = iou
@@ -70,4 +85,3 @@ class YoloPersonDetector(PersonDetector):
                     )
                 )
         return detections
-
