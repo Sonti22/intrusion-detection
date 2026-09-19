@@ -1,4 +1,4 @@
-"""YOLO-based person detector adapter."""
+'''YOLO-based person detector adapter.'''
 from __future__ import annotations
 
 import numpy as np
@@ -10,7 +10,14 @@ from ..config import CONFIDENCE_THRESHOLD, DEVICE, IOU_THRESHOLD, MODEL_NAME
 
 
 class YoloPersonDetector(PersonDetector):
-    """YOLO-based implementation of PersonDetector."""
+    """YOLO-based implementation of PersonDetector.
+
+    The constructor now validates that the specified model can be loaded.
+    If loading fails (e.g., missing file, corrupted weights), a clear
+    ``RuntimeError`` is raised with the original exception attached as the
+    cause. This prevents the application from crashing later with an obscure
+    ``ImportError`` or ``AttributeError`` when ``detect`` is called.
+    """
 
     def __init__(
         self,
@@ -22,12 +29,18 @@ class YoloPersonDetector(PersonDetector):
         """Initialize YOLO detector.
 
         Args:
-            model_name: YOLO model name or path
-            device: Device to run on ("cpu" or "cuda")
-            conf: Confidence threshold
-            iou: IoU threshold for NMS
+            model_name: YOLO model name or path.
+            device: Device to run on ("cpu" or "cuda").
+            conf: Confidence threshold.
+            iou: IoU threshold for NMS.
         """
-        self.model = YOLO(model_name)
+        try:
+            self.model = YOLO(model_name)
+        except Exception as exc:  # pragma: no cover – defensive guard
+            raise RuntimeError(
+                f"Failed to load YOLO model '{model_name}'. Ensure the model file exists "
+                "and is compatible with the installed ultralytics package."
+            ) from exc
         self.device = device
         self.conf = conf
         self.iou = iou
@@ -36,11 +49,11 @@ class YoloPersonDetector(PersonDetector):
         """Detect persons in frame using YOLO.
 
         Args:
-            frame: Video frame as numpy array
-            timestamp: Current frame timestamp (unused but required by protocol)
+            frame: Video frame as numpy array.
+            timestamp: Current frame timestamp (unused but required by protocol).
 
         Returns:
-            List of detected persons
+            List of detected persons.
         """
         results = self.model(
             frame,
@@ -70,4 +83,3 @@ class YoloPersonDetector(PersonDetector):
                     )
                 )
         return detections
-
