@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -25,7 +26,7 @@ class JsonZoneRepository(ZoneRepository):
         """Load zones from JSON file.
 
         Returns:
-            List of zones. Empty list if file doesn't exist or is empty.
+            List of zones. Empty list if file doesn't exist, is empty, or cannot be parsed.
         """
         if not self._path.exists():
             return []
@@ -34,7 +35,12 @@ class JsonZoneRepository(ZoneRepository):
         if not raw:
             return []
 
-        data = json.loads(raw)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            logging.error(f"Failed to parse zones JSON at {self._path}: {e}")
+            return []
+
         zones: list[Zone] = []
         for item in data:
             points: list[Point] = [tuple(map(int, p)) for p in item["points"]]
@@ -63,4 +69,3 @@ class JsonZoneRepository(ZoneRepository):
                 }
             )
         self._path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
