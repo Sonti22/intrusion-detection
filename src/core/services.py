@@ -5,7 +5,7 @@ from .entities import Detection, IntrusionState, Point, Zone, bbox_center
 
 
 def point_in_polygon(point: Point, polygon: list[Point]) -> bool:
-    """Check if a point is inside a polygon using ray-casting algorithm.
+    """Check if a point is inside a polygon using ray‑casting algorithm.
 
     Args:
         point: Point to check (x, y)
@@ -14,6 +14,10 @@ def point_in_polygon(point: Point, polygon: list[Point]) -> bool:
     Returns:
         True if point is inside polygon, False otherwise
     """
+    # Guard against empty or degenerate polygons which would raise IndexError
+    if not polygon or len(polygon) < 3:
+        return False
+
     x, y = point
     n = len(polygon)
     inside = False
@@ -125,4 +129,3 @@ def _self_test() -> None:
 
 if __name__ == "__main__":
     _self_test()
-
